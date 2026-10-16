@@ -13,6 +13,8 @@ npm run dev
 
 Entra en la dirección que muestra la terminal (normalmente `http://localhost:5173`).
 
+La copia publicada está en [cognitivearia.github.io/Sampler-sequencer-Exploration](https://cognitivearia.github.io/Sampler-sequencer-Exploration/). Se actualiza al subir la rama. Los enlaces son relativos a esa carpeta, y la librería 3D se carga desde jsDelivr.
+
 ## Tocar
 
 - Clic en un pad, o el teclado: `Q W E R` / `A S D F` / `Z X C V`.
