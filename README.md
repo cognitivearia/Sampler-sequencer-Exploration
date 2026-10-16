@@ -22,6 +22,7 @@ Entra en la dirección que muestra la terminal (normalmente `http://localhost:51
 - **Grabar**: mientras suena, lo que toques se anota en el paso actual.
 - **Aleatorio** propone otro ritmo. **Borrar** deja la rejilla en blanco.
 - Tempo, balanceo (swing) y volumen están en los deslizadores.
+- Efectos, con ratón, dedo o las teclas `1` a `7`: Whammy, Ruido, Wawa, Delay, Eco, Anillo y Metal. Los dos últimos son experimentales. `−` y `+` cambian la cantidad del efecto elegido. Delay y Eco siguen el tempo.
 
 ## Qué cambiar
 
@@ -30,6 +31,8 @@ Entra en la dirección que muestra la terminal (normalmente `http://localhost:51
 | Colores, tempo inicial, letras, golpes del patrón | `src/config.js` |
 | El dibujo de cada letra | `src/glyphs.js` |
 | Cómo suena cada pad | `src/audio.js` |
+| Qué hace cada efecto | `src/effects.js` |
+| Nombres y atajos de los efectos | `src/config.js` (`EFFECTS`) |
 | El cartel de fondo | `public/poster.svg` |
 | Tamaño de la caja y cuánto se hunde un pad | `src/machine.js` (`TRAVEL`, `PITCH`, `PAD`) |
 

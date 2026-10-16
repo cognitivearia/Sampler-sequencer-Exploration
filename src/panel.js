@@ -35,7 +35,32 @@ function slider({ label, min, max, step, value, format, onInput }) {
   return wrap
 }
 
-export function createPanel(root, { pads, pattern, bpm, onToggle, onRecord, onClear, onRandom, onBpm, onSwing, onVolume, onPad }) {
+function effectButton(fx, onToggle) {
+  const el = document.createElement('button')
+  el.type = 'button'
+  el.className = 'fx-btn'
+  el.dataset.effect = fx.id
+  el.title = fx.hint
+  el.setAttribute('aria-pressed', 'false')
+  el.setAttribute('aria-label', `${fx.name}. Tecla ${fx.key}. ${fx.hint}`)
+  const key = document.createElement('kbd')
+  key.textContent = fx.key
+  const label = document.createElement('span')
+  label.textContent = fx.name
+  el.append(key, label)
+  if (fx.experimental) {
+    const tag = document.createElement('i')
+    tag.textContent = 'exp'
+    el.append(tag)
+  }
+  el.addEventListener('click', () => {
+    el.blur()
+    onToggle(fx.id)
+  })
+  return el
+}
+
+export function createPanel(root, { pads, pattern, bpm, effects, onToggle, onRecord, onClear, onRandom, onBpm, onSwing, onVolume, onPad, onToggleEffect, onEffectAmount }) {
   root.replaceChildren()
 
   const transport = document.createElement('div')
@@ -82,6 +107,36 @@ export function createPanel(root, { pads, pattern, bpm, onToggle, onRecord, onCl
   })
 
   transport.append(playBtn, recBtn, clearBtn, randomBtn, tempo, swing, volume, name)
+
+  const fxBar = document.createElement('div')
+  fxBar.className = 'fx'
+  const fxLabel = document.createElement('span')
+  fxLabel.className = 'fx-label'
+  fxLabel.textContent = 'Efectos'
+  const fxList = document.createElement('div')
+  fxList.className = 'fx-list'
+  fxList.setAttribute('role', 'toolbar')
+  fxList.setAttribute('aria-label', 'Efectos')
+  const fxButtons = new Map()
+  for (const fx of effects.effects) {
+    const el = effectButton(fx, onToggleEffect)
+    fxButtons.set(fx.id, el)
+    fxList.append(el)
+  }
+  const amountTitle = document.createElement('span')
+  const amountInput = document.createElement('input')
+  amountInput.type = 'range'
+  amountInput.min = '0'
+  amountInput.max = '100'
+  amountInput.step = '1'
+  amountInput.setAttribute('aria-label', 'Cantidad del efecto')
+  const amountWrap = document.createElement('label')
+  amountWrap.className = 'slider fx-amount'
+  amountInput.addEventListener('input', () => {
+    onEffectAmount(Number(amountInput.value) / 100)
+  })
+  amountWrap.append(amountTitle, amountInput)
+  fxBar.append(fxLabel, fxList, amountWrap)
 
   const grid = document.createElement('div')
   grid.className = 'grid'
@@ -146,9 +201,27 @@ export function createPanel(root, { pads, pattern, bpm, onToggle, onRecord, onCl
 
   const hint = document.createElement('p')
   hint.className = 'hint'
-  hint.textContent = 'Teclas Q W E R · A S D F · Z X C V. Espacio toca o para. Grabar anota lo que toques en el paso que está sonando.'
+  hint.textContent = 'Pads: Q W E R · A S D F · Z X C V. Espacio toca o para. Efectos: 1 a 7. − y + cambian la cantidad.'
 
-  root.append(transport, grid, hint)
+  root.append(transport, fxBar, grid, hint)
+
+  function paintFx(view) {
+    for (const fx of view.effects) {
+      const el = fxButtons.get(fx.id)
+      if (!el) continue
+      el.classList.toggle('is-on', fx.on)
+      el.classList.toggle('is-selected', fx.id === view.selected)
+      el.setAttribute('aria-pressed', fx.on ? 'true' : 'false')
+      if (fx.id === view.selected) el.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+    }
+    const current = view.effects.find((fx) => fx.id === view.selected)
+    if (!current) return
+    const percent = Math.round(current.amount * 100)
+    if (document.activeElement !== amountInput) amountInput.value = String(percent)
+    amountTitle.textContent = `${current.name} ${percent}%`
+    amountInput.setAttribute('aria-label', `Cantidad de ${current.name}`)
+  }
+  paintFx(effects)
 
   function syncPattern() {
     for (const cell of stepButtons) {
@@ -184,5 +257,6 @@ export function createPanel(root, { pads, pattern, bpm, onToggle, onRecord, onCl
         el.classList.toggle('is-hot', lane === index)
       })
     },
+    paintFx,
   }
 }

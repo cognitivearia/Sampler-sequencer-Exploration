@@ -1,15 +1,21 @@
 // Sintetizador de batería. Cada nombre de `voice` en config.js
 // corresponde a una función de aquí. No usa samples.
+import { createEffects } from './effects.js'
 
 export function createAudio() {
   let ctx = null
+  let bus = null
   let master = null
   let noise = null
+  let effects = null
 
   function ensure() {
     if (ctx) return
     const AudioCtx = window.AudioContext || window.webkitAudioContext
     ctx = new AudioCtx()
+    bus = ctx.createGain()
+    const dry = ctx.createGain()
+    const sum = ctx.createGain()
     master = ctx.createGain()
     master.gain.value = 0.78
     const comp = ctx.createDynamicsCompressor()
@@ -18,8 +24,12 @@ export function createAudio() {
     comp.ratio.value = 4
     comp.attack.value = 0.004
     comp.release.value = 0.16
-    master.connect(comp)
-    comp.connect(ctx.destination)
+    bus.connect(dry)
+    dry.connect(sum)
+    sum.connect(comp)
+    comp.connect(master)
+    master.connect(ctx.destination)
+    effects = createEffects(ctx, bus, sum)
 
     noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
     const data = noise.getChannelData(0)
@@ -28,7 +38,7 @@ export function createAudio() {
 
   function env(peak, time, attack, release) {
     const gain = ctx.createGain()
-    gain.connect(master)
+    gain.connect(bus)
     const safe = Math.max(0.0001, peak)
     gain.gain.setValueAtTime(0.0001, time)
     gain.gain.exponentialRampToValueAtTime(safe, time + attack)
@@ -159,6 +169,14 @@ export function createAudio() {
       ensure()
       const next = Math.min(1, Math.max(0, value))
       master.gain.setTargetAtTime(next, ctx.currentTime, 0.015)
+    },
+    setTempo(bpm) {
+      ensure()
+      effects.setTempo(bpm)
+    },
+    setEffect(id, settings) {
+      ensure()
+      effects.set(id, settings)
     },
     play(voice, time) {
       ensure()

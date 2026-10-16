@@ -2,7 +2,8 @@ import { createAudio } from './audio.js'
 import { createMachine } from './machine.js'
 import { createPanel } from './panel.js'
 import { createSequencer } from './sequencer.js'
-import { DEFAULT_BPM, PADS } from './config.js'
+import { DEFAULT_BPM, EFFECTS, PADS } from './config.js'
+import { createFxRack } from './fx-rack.js'
 import { patternFromPads } from './pattern.js'
 
 const audio = createAudio()
@@ -16,6 +17,13 @@ const machine = createMachine(canvas, {
 })
 
 const sequencer = createSequencer({ pads: PADS, pattern, audio })
+const fx = createFxRack(EFFECTS)
+
+function pushEffect(id) {
+  const current = fx.view().effects.find((item) => item.id === id)
+  if (!current) return
+  audio.setEffect(id, current)
+}
 
 const panel = createPanel(document.querySelector('#panel'), {
   pads: PADS,
@@ -35,14 +43,29 @@ const panel = createPanel(document.querySelector('#panel'), {
   onBpm: (value) => {
     sequencer.setBpm(value)
     machine.setBpm(value)
+    audio.setTempo(value)
   },
   onSwing: (value) => sequencer.setSwing(value),
   onVolume: (value) => audio.setVolume(value),
+  effects: fx.view(),
+  onToggleEffect: async (id) => {
+    await audio.unlock()
+    const view = fx.toggle(id)
+    pushEffect(id)
+    panel.paintFx(view)
+  },
+  onEffectAmount: async (amount) => {
+    await audio.unlock()
+    const view = fx.setAmount(amount)
+    pushEffect(view.selected)
+    panel.paintFx(view)
+  },
 })
 
 machine.setBpm(DEFAULT_BPM)
 
 const keys = new Map(PADS.map((pad, index) => [pad.key.toLowerCase(), index]))
+const effectKeys = new Map(EFFECTS.map((item) => [item.key, item.id]))
 
 async function perform(index) {
   await audio.unlock()
@@ -73,6 +96,28 @@ window.addEventListener('keydown', (event) => {
     return
   }
   if (event.metaKey || event.ctrlKey || event.altKey) return
+  const effectId = effectKeys.get(event.key)
+  if (effectId) {
+    event.preventDefault()
+    if (!event.repeat) {
+      audio.unlock().then(() => {
+        const view = fx.toggle(effectId)
+        pushEffect(effectId)
+        panel.paintFx(view)
+      })
+    }
+    return
+  }
+  if (event.key === '-' || event.key === '_' || event.key === '+' || event.key === '=') {
+    event.preventDefault()
+    const delta = event.key === '-' || event.key === '_' ? -0.08 : 0.08
+    audio.unlock().then(() => {
+      const view = fx.nudge(delta)
+      pushEffect(view.selected)
+      panel.paintFx(view)
+    })
+    return
+  }
   const index = keys.get(event.key.toLowerCase())
   if (index == null) return
   event.preventDefault()

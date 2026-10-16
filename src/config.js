@@ -40,6 +40,18 @@ export const letterSlop = {
 // Orden de lectura, de izquierda a derecha y de arriba a abajo.
 // `key` es la tecla del teclado (la posición), no la letra pintada.
 // Hay letras repetidas, así que la tecla no puede ser la letra.
+// Atajos de efectos. No pueden coincidir con las teclas de los pads.
+// amount es la cantidad al encenderlos (de 0 a 1).
+export const EFFECTS = [
+  { id: 'whammy', name: 'Whammy', key: '1', hint: 'Baja el tono, como un pedal whammy.', amount: 0.72 },
+  { id: 'ruido', name: 'Ruido', key: '2', hint: 'Ensucia el golpe con ruido digital.', amount: 0.55 },
+  { id: 'wawa', name: 'Wawa', key: '3', hint: 'Un filtro que abre y cierra.', amount: 0.65 },
+  { id: 'delay', name: 'Delay', key: '4', hint: 'Una repetición corta, al tempo.', amount: 0.45 },
+  { id: 'eco', name: 'Eco', key: '5', hint: 'Repeticiones más largas, al tempo.', amount: 0.4 },
+  { id: 'anillo', name: 'Anillo', key: '6', hint: 'Experimental. Modulación metálica.', amount: 0.4, experimental: true },
+  { id: 'metal', name: 'Metal', key: '7', hint: 'Experimental. Resonancia corta, tipo resorte.', amount: 0.5, experimental: true },
+]
+
 export const PADS = [
   { letter: 'S', key: 'Q', name: 'Bombo', voice: 'kick', hits: [0, 3, 6, 8, 11] },
   { letter: 'Q', key: 'W', name: 'Caja', voice: 'snare', hits: [4, 12] },
